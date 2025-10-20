@@ -74,6 +74,6 @@ jobs:
             IMAGE="${{ secrets.DOCKERHUB_USERNAME }}/demo-app:latest"
             docker pull $IMAGE
             docker rm -f demo-app || true
-            docker run -d --name demo-app -p 8080:8080 --restart unless-stopped $IMAGE
+            docker run -d --name demo-app -p 127.0.0.1:8080:8080 --restart unless-stopped $IMAGE
             sleep 2
             curl -sf http://localhost:8080/health || (docker logs --tail 100 demo-app && exit 1)
