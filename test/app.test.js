@@ -1,29 +1,16 @@
-const express = require('express');
-const app = express();
-const PORT = process.env.PORT || 8080;
+const request = require('supertest');
+const app = require('../src/server');
 
-// Middleware to parse JSON bodies
-app.use(express.json());
+describe('App basic routes', () => {
+  it('GET / should return greeting', async () => {
+    const res = await request(app).get('/');
+    expect(res.statusCode).toBe(200);
+    expect(res.text).toMatch(/Hello from CI\/CD!/);
+  });
 
-// 1. Root Route
-app.get('/', (req, res) => {
-  // Console log removed from here to prevent log spam during tests
-  res.status(200).send('Hello from CI/CD!');
+  it('GET /health should return ok', async () => {
+    const res = await request(app).get('/health');
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toEqual({ status: 'ok' });
+  });
 });
-
-// 2. Health Check Route
-app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'ok' });
-});
-
-// IMPORTANT FIX:
-// 1. Export the 'app' instance so supertest can use it.
-// 2. Do NOT call app.listen() here. app.listen() should only be called when running the application for real.
-module.exports = app;
-
-// Optionally, you can create a separate file (e.g., 'index.js')
-// to run the server, or use this check for local execution:
-if (require.main === module) {
-  // This block runs only when the file is executed directly (e.g., node src/server.js)
-  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-}
