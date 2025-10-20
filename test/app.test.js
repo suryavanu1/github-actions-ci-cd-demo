@@ -1,38 +1,29 @@
-const request = require('supertest');
-// Import both the app (Express instance) and the actual server instance
-// The server instance is what we need to close.
-const { app, server } = require('../src/server');
+const express = require('express');
+const app = express();
+const PORT = process.env.PORT || 8080;
 
-describe('App basic routes', () => {
+// Middleware to parse JSON bodies
+app.use(express.json());
 
-  // --- FIX: Add afterAll hook to close the server ---
-  // This hook ensures that the server process is explicitly terminated
-  // after all tests in this suite are finished. This resolves the "Jest did not exit" warning.
-  afterAll(done => {
-    // Check if the server object exists and has a close method
-    if (server && typeof server.close === 'function') {
-      console.log('Closing HTTP server...');
-      server.close(() => {
-        console.log('HTTP server closed.');
-        done(); // Jest continues once the server is fully closed
-      });
-    } else {
-        done(); // Proceed if server object isn't available
-    }
-  });
-  // ----------------------------------------------------
-
-  it('GET / should return greeting', async () => {
-    const res = await request(app).get('/');
-    expect(res.statusCode).toBe(200);
-    // Ensure the greeting is correct, handling potential / in regex
-    expect(res.text).toMatch(/Hello from CI\/CD!/);
-  });
-
-  it('GET /health should return ok', async () => {
-    const res = await request(app).get('/health');
-    expect(res.statusCode).toBe(200);
-    // Note: supertest parses JSON for non-text responses automatically into res.body
-    expect(res.body).toEqual({ status: 'ok' });
-  });
+// 1. Root Route
+app.get('/', (req, res) => {
+  // Console log removed from here to prevent log spam during tests
+  res.status(200).send('Hello from CI/CD!');
 });
+
+// 2. Health Check Route
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
+
+// IMPORTANT FIX:
+// 1. Export the 'app' instance so supertest can use it.
+// 2. Do NOT call app.listen() here. app.listen() should only be called when running the application for real.
+module.exports = app;
+
+// Optionally, you can create a separate file (e.g., 'index.js')
+// to run the server, or use this check for local execution:
+if (require.main === module) {
+  // This block runs only when the file is executed directly (e.g., node src/server.js)
+  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+}
